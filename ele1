@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://tempuri.org/">
+ <xs:element name="ReceiveReportEvent">
+    <xs:complexType>
+       <xs:sequence>
+          <xs:element minOccurs="0" name="sourceSystem" nillable="true" type="xs:string" />
+          <xs:element minOccurs="0" name="eventData" nillable="true" type="xs:string" />
+          <xs:element minOccurs="0" name="tranactionId" nillable="true" type="xs:string" />
+       </xs:sequence>
+    </xs:complexType>
+ </xs:element>
+ <xs:element name="ReceiveReportEventResponse">
+    <xs:complexType>
+       <xs:sequence>
+          <xs:element minOccurs="0" name="response" type="xs:boolean" />
+       </xs:sequence>
+    </xs:complexType>
+ </xs:element>
+</xs:schema>
+
+
+
+
+http://www.mocky.io/v2/58fcb6790f00008e18513657
