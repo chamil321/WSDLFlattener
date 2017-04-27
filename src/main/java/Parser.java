@@ -27,14 +27,14 @@ import java.io.InputStream;
  * This class is written to parse WSDL using XOM library
  */
 public class Parser {
-    private static Builder parser;
-    private static Document doc = null;
+    private Builder parser;
+    private Document doc = null;
 
     public Parser(){
         parser = new Builder();
     }
 
-    public static Document getWSDL(String input) {
+    public Document getWSDL(String input) {
 
         try {
             doc = parser.build(input);
@@ -46,7 +46,7 @@ public class Parser {
         return doc;
     }
 
-    public static Document getWSDL(InputStream inputStream) {
+    public Document getWSDL(InputStream inputStream) {
 
         try {
             doc = parser.build(inputStream);

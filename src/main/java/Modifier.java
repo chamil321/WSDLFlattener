@@ -40,21 +40,18 @@ public class Modifier {
 
     private static final String TYPES = "wsdl:types";
     private static final String Schema = "xsd:schema";
-    private static final String SCHEMALOCATION = "schemaLocation";
-    private static final int unauthorized = 401;
+    private static final String SchemaLocation = "schemaLocation";
 
     private static Parser parser;
-    private static Document document,subDocument;
-    private static Element root,subRoot;
+    private static Document subDocument;
     private static Properties prop = new Properties();
-    private static InputStream input = null;
     private static boolean refAvailable = false;
     private static final Logger log = Logger.getLogger(Modifier.class.getName());
 
     public static void main(String[] args){
 
         try {
-            input = new FileInputStream("config.properties");
+            InputStream input = new FileInputStream("config.properties");
             prop.load(input);
         }catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -62,8 +59,8 @@ public class Modifier {
             e.printStackTrace();
         }
         parser = new Parser();
-        document = parser.getWSDL(prop.getProperty("url"));
-        root = document.getRootElement();
+        Document document = parser.getWSDL(prop.getProperty("url"));
+        Element root = document.getRootElement();
         flattenWSDL(root,0);
         if(refAvailable)
             restructure(root, 0);
@@ -75,7 +72,7 @@ public class Modifier {
     public  static void flattenWSDL(Element current, int depth) {
         if(current.getAttributeCount()!=0) {
             for (int i=0;i<current.getAttributeCount();i++){
-                if(current.getAttribute(i).getQualifiedName().equalsIgnoreCase(SCHEMALOCATION)){
+                if(current.getAttribute(i).getQualifiedName().equalsIgnoreCase(SchemaLocation)){
                     String attributeValue = current.getAttribute(i).getValue();
                     importContent(current.getParent(), attributeValue);
                     refAvailable = true;
@@ -92,7 +89,7 @@ public class Modifier {
         log.info("Importing.....");
         int serverResponse = 0;
         URL url;
-        HttpURLConnection connection = null;
+        HttpURLConnection connection;
         InputStream inputStream = null;
         try {
             url = new URL(attributeValue);
@@ -105,28 +102,15 @@ public class Modifier {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        if(serverResponse==unauthorized){
-            String authString = prop.getProperty("username")+":"+prop.getProperty("password");
-            String encoding = org.apache.xerces.impl.dv.util.Base64.encode(authString.getBytes());
-            try {
-                url = new URL(attributeValue);
-                connection = (HttpURLConnection)url.openConnection();
-                connection.setRequestMethod("GET");
-                connection.setDoOutput(true);
-                connection.setRequestProperty  ("Authorization", "Basic " + encoding);
-                inputStream = (InputStream) connection.getInputStream();
-                subDocument = parser.getWSDL(inputStream);
-            } catch (ProtocolException e) {
-                e.printStackTrace();
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        if(serverResponse==401){
+            Authenticator authenticator = new BasicAuth(prop.getProperty("username"),prop.getProperty("password"));
+            subDocument = parser.getWSDL(authenticator.authenticate(attributeValue));
+        }else if(serverResponse==403){
+            System.out.println("Error- 403");
         }else{
             subDocument = parser.getWSDL(attributeValue);
         }
-        subRoot = subDocument.getRootElement();
+        Element subRoot = subDocument.getRootElement();
         for(int k=0;k<parent.getChildCount();k++) {
             if (parent.getChild(k) instanceof Element) {
                 Element child = (Element) parent.getChild(k);
@@ -172,9 +156,9 @@ public class Modifier {
             fw.close();
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (NullPointerException e){
+            e.printStackTrace();
         }
-
-
     }
 }
 
