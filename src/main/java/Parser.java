@@ -19,7 +19,6 @@
 import nu.xom.Builder;
 import nu.xom.Document;
 import nu.xom.ParsingException;
-
 import java.io.IOException;
 import java.io.InputStream;
 

@@ -28,8 +28,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
-import java.net.ProtocolException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Logger;
 
@@ -40,26 +43,21 @@ public class Modifier {
 
     private static final String TYPES = "wsdl:types";
     private static final String Schema = "xsd:schema";
+    private static final String WSDL_URL = "wsdl_url";
     private static final String SchemaLocation = "schemaLocation";
 
     private static Parser parser;
     private static Document subDocument;
-    private static Properties prop = new Properties();
     private static boolean refAvailable = false;
+    private static Properties prop = new Properties();
+    private static ArrayList<List<String>> credentialList;
     private static final Logger log = Logger.getLogger(Modifier.class.getName());
 
     public static void main(String[] args){
 
-        try {
-            InputStream input = new FileInputStream("config.properties");
-            prop.load(input);
-        }catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        getInputData();
         parser = new Parser();
-        Document document = parser.getWSDL(prop.getProperty("url"));
+        Document document = parser.getWSDL(prop.getProperty(WSDL_URL));
         Element root = document.getRootElement();
         flattenWSDL(root,0);
         if(refAvailable)
@@ -103,7 +101,8 @@ public class Modifier {
             e.printStackTrace();
         }
         if(serverResponse==401){
-            Authenticator authenticator = new BasicAuth(prop.getProperty("username"),prop.getProperty("password"));
+            List credList = getCredentials(attributeValue);
+            Authenticator authenticator = new BasicAuth(credList.get(1).toString(),credList.get(2).toString());
             subDocument = parser.getWSDL(authenticator.authenticate(attributeValue));
         }else if(serverResponse==403){
             System.out.println("Error- 403");
@@ -159,6 +158,34 @@ public class Modifier {
         } catch (NullPointerException e){
             e.printStackTrace();
         }
+    }
+
+    public static void getInputData() {
+        try {
+            prop.load(new FileInputStream("config.properties"));
+        }catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        credentialList = new ArrayList();
+        for (final Map.Entry<Object, Object> entry : prop.entrySet()) {
+            String key = (String) entry.getKey();
+            if(!key.equalsIgnoreCase(WSDL_URL)){
+                List<String> reference = Arrays.asList(entry.getValue().toString().split(","));
+                System.out.println(reference.get(0));
+                credentialList.add(reference);
+            }
+        }
+    }
+
+    private static List getCredentials(String attributeValue) {
+        for (java.util.List<String> reference :credentialList) {
+            if(reference.get(0).equalsIgnoreCase(attributeValue)){
+                return reference;
+            }
+        }
+        return null;
     }
 }
 
