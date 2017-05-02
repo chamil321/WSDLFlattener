@@ -41,14 +41,14 @@ import java.util.logging.Logger;
  */
 public class Modifier {
 
-    private static final String TYPES = "wsdl:types";
-    private static final String Schema = "xsd:schema";
     private static final String WSDL_URL = "wsdl_url";
     private static final String SchemaLocation = "schemaLocation";
 
     private static Parser parser;
     private static Document subDocument;
+    private static ParentNode grandParent = null;
     private static boolean refAvailable = false;
+    private static boolean isfirst = true;
     private static Properties prop = new Properties();
     private static ArrayList<List<String>> credentialList;
     private static final Logger log = Logger.getLogger(Modifier.class.getName());
@@ -60,8 +60,6 @@ public class Modifier {
         Document document = parser.getWSDL(prop.getProperty(WSDL_URL));
         Element root = document.getRootElement();
         flattenWSDL(root,0);
-        if(refAvailable)
-            restructure(root, 0);
         String result = document.toXML();
         System.out.println(result);
         //writeFile(result);
@@ -78,7 +76,8 @@ public class Modifier {
             }
         }
         Elements children = current.getChildElements();
-        for (int i = 0; i < children.size(); i++) {
+        Elements childrenCopy = current.getChildElements();
+        for (int i = 0; i < childrenCopy.size(); i++) {
             flattenWSDL(children.get(i), depth+1);
         }
     }
@@ -115,16 +114,20 @@ public class Modifier {
                 Element child = (Element) parent.getChild(k);
                 for (int j = 0; j < child.getAttributeCount(); j++) {
                     if (child.getAttribute(j).getValue().toString().equalsIgnoreCase(attributeValue.toString())) {
-                        //parent.replaceChild(parent.getChild(k), subRoot.copy());
-                        parent.getParent().appendChild(subRoot.copy());
-                        //parent.getParent().replaceChild(parent, subRoot.copy());
+                        if(isfirst){
+                            grandParent = parent.getParent();
+                            grandParent.replaceChild(parent, subRoot.copy());
+                            isfirst = false;
+                        }else {
+                            grandParent.appendChild(subRoot.copy());
+                        }
                     }
                 }
             }
         }
     }
 
-    public static void restructure(Element current,int depth) {
+    /*public static void restructure(Element current,int depth) {
         if (current.getQualifiedName().equalsIgnoreCase(TYPES)) {
             for(int i=0;i<current.getChildElements().size();i++){
                 if(current.getChildElements().get(i).getQualifiedName().equalsIgnoreCase(Schema)){
@@ -136,7 +139,7 @@ public class Modifier {
         for (int i = 0; i < children.size(); i++) {
             restructure( children.get(i), depth+1);
         }
-    }
+    }*/
 
     public static void writeFile(String result) {
         BufferedWriter bw = null;
