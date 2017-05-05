@@ -22,6 +22,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
+import java.util.Scanner;
 
 /**
  * This class is written to implement basic auth authentication
@@ -48,7 +49,19 @@ public class BasicAuth extends Authenticator{
             connection.setRequestMethod("GET");
             connection.setDoOutput(true);
             connection.setRequestProperty  ("Authorization", "Basic " + encoding);
-            inputStream = connection.getInputStream();
+            if(connection.getResponseCode() == 403){
+                Scanner scanner = new Scanner(System.in);
+                System.out.print("Authentication error!\nEnter credentials:" + urlString + "\nUsername: ");
+                String username = scanner.next();
+                System.out.print("Password: ");
+                String password = scanner.next();
+
+                Authenticator authenticator = new BasicAuth(username.toString(),password.toString());
+                return  authenticator.authenticate(urlString);
+
+            }else {
+                inputStream = connection.getInputStream();
+            }
         } catch (MalformedURLException e) {
             e.printStackTrace();
         } catch (ProtocolException e) {

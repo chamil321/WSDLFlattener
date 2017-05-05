@@ -30,10 +30,9 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
+import java.util.Scanner;
 import java.util.logging.Logger;
 
 /**
@@ -47,11 +46,14 @@ public class Modifier {
     private static Parser parser;
     private static Document subDocument;
     private static ParentNode grandParent = null;
-    private static boolean refAvailable = false;
     private static boolean isfirst = true;
+    private static boolean isFirstPrompt = true;
     private static Properties prop = new Properties();
     private static ArrayList<List<String>> credentialList;
+    private static ArrayList<String> credList;
     private static final Logger log = Logger.getLogger(Modifier.class.getName());
+
+
 
     public static void main(String[] args){
 
@@ -69,9 +71,7 @@ public class Modifier {
         if(current.getAttributeCount()!=0) {
             for (int i=0;i<current.getAttributeCount();i++){
                 if(current.getAttribute(i).getQualifiedName().equalsIgnoreCase(SchemaLocation)){
-                    String attributeValue = current.getAttribute(i).getValue();
-                    importContent(current.getParent(), attributeValue);
-                    refAvailable = true;
+                    importContent(current.getParent(), current.getAttribute(i).getValue());
                 }
             }
         }
@@ -86,7 +86,7 @@ public class Modifier {
         log.info("Importing.....");
         int serverResponse = 0;
         URL url;
-        HttpURLConnection connection;
+        HttpURLConnection connection = null;
         InputStream inputStream = null;
         try {
             url = new URL(attributeValue);
@@ -100,9 +100,18 @@ public class Modifier {
             e.printStackTrace();
         }
         if(serverResponse==401){
-            List credList = getCredentials(attributeValue);
-            Authenticator authenticator = new BasicAuth(credList.get(1).toString(),credList.get(2).toString());
+            if(isFirstPrompt) {
+                credList = new ArrayList();
+                Scanner scanner = new Scanner(System.in);
+                System.out.print("Enter credentials:" + attributeValue + "\nUsername: ");
+                credList.add(scanner.next());
+                System.out.print("Password: ");
+                credList.add(scanner.next());
+                isFirstPrompt = false;
+            }
+            Authenticator authenticator = new BasicAuth(credList.get(0).toString(),credList.get(1).toString());
             subDocument = parser.getWSDL(authenticator.authenticate(attributeValue));
+
         }else if(serverResponse==403){
             System.out.println("Error- 403");
         }else{
@@ -171,15 +180,15 @@ public class Modifier {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        credentialList = new ArrayList();
-        for (final Map.Entry<Object, Object> entry : prop.entrySet()) {
+        //credentialList = new ArrayList();
+        /*for (final Map.Entry<Object, Object> entry : prop.entrySet()) {
             String key = (String) entry.getKey();
             if(!key.equalsIgnoreCase(WSDL_URL)){
                 List<String> reference = Arrays.asList(entry.getValue().toString().split(","));
-                System.out.println(reference.get(0));
+                //System.out.println(reference.get(0));
                 credentialList.add(reference);
             }
-        }
+        }*/
     }
 
     private static List getCredentials(String attributeValue) {
