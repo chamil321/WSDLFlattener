@@ -70,6 +70,5 @@ public class BasicAuth extends Authenticator{
             e.printStackTrace();
         }
         return inputStream;
-
     }
 }

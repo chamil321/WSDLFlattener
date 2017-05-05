@@ -111,7 +111,6 @@ public class Modifier {
             }
             Authenticator authenticator = new BasicAuth(credList.get(0).toString(),credList.get(1).toString());
             subDocument = parser.getWSDL(authenticator.authenticate(attributeValue));
-
         }else if(serverResponse==403){
             System.out.println("Error- 403");
         }else{
