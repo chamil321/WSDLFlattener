@@ -21,8 +21,6 @@ import nu.xom.Element;
 import nu.xom.Elements;
 import nu.xom.ParentNode;
 import java.io.BufferedWriter;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,6 +42,7 @@ public class Modifier {
     private static final String SchemaLocation = "schemaLocation";
 
     private static Parser parser;
+    private static String wsdl_url;
     private static Document subDocument;
     private static ParentNode grandParent = null;
     private static boolean isfirst = true;
@@ -57,9 +56,17 @@ public class Modifier {
 
     public static void main(String[] args){
 
-        getInputData();
+        if (args.length > 0) {
+            wsdl_url = args[0].toString();
+        }else{
+            System.out.print("Add WSDL url as Argument : ");
+            Scanner scanner = new Scanner(System.in);
+            wsdl_url = scanner.next();
+            //System.exit(1);
+        }
+        //getInputData();
         parser = new Parser();
-        Document document = parser.getWSDL(prop.getProperty(WSDL_URL));
+        Document document = parser.getWSDL(wsdl_url);
         Element root = document.getRootElement();
         flattenWSDL(root,0);
         String result = document.toXML();
@@ -99,7 +106,7 @@ public class Modifier {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        if(serverResponse==401){
+        if(serverResponse == 401){
             if(isFirstPrompt) {
                 credList = new ArrayList();
                 Scanner scanner = new Scanner(System.in);
@@ -111,10 +118,10 @@ public class Modifier {
             }
             Authenticator authenticator = new BasicAuth(credList.get(0).toString(),credList.get(1).toString());
             subDocument = parser.getWSDL(authenticator.authenticate(attributeValue));
-        }else if(serverResponse==403){
-            System.out.println("Error- 403");
-        }else{
+        }else if(serverResponse == 200){
             subDocument = parser.getWSDL(attributeValue);
+        }else{
+            log.info("Error-"+serverResponse);
         }
         Element subRoot = subDocument.getRootElement();
         for(int k=0;k<parent.getChildCount();k++) {
@@ -173,12 +180,11 @@ public class Modifier {
 
     public static void getInputData() {
         try {
-            prop.load(new FileInputStream("config.properties"));
-        }catch (FileNotFoundException e) {
-            e.printStackTrace();
+            prop.load(Modifier.class.getClassLoader().getResourceAsStream("config.properties"));
         } catch (IOException e) {
             e.printStackTrace();
         }
+        //prop.load(new FileInputStream("config.properties"));/home/chamil/Documents/projects/WSDLFlattener/src/main/resources/config.properties
         //credentialList = new ArrayList();
         /*for (final Map.Entry<Object, Object> entry : prop.entrySet()) {
             String key = (String) entry.getKey();

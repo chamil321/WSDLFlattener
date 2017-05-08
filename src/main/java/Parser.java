@@ -40,7 +40,8 @@ public class Parser {
         } catch (ParsingException e) {
             e.printStackTrace();
         } catch (IOException e) {
-            e.printStackTrace();
+            //e.printStackTrace();
+            System.out.println("IOException: " + e);
         }
         return doc;
     }
