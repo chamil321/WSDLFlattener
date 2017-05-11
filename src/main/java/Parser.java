@@ -28,20 +28,26 @@ import java.io.InputStream;
 public class Parser {
     private Builder parser;
     private Document doc = null;
+    private ActionLogger logger;
 
     public Parser(){
+
         parser = new Builder();
+        logger = ActionLogger.getInstance();
     }
 
     public Document getWSDL(String input) {
 
         try {
             doc = parser.build(input);
+            logger.log.info(input.toString());
         } catch (ParsingException e) {
-            e.printStackTrace();
+            logger.log.info(e.toString());
+            System.out.println(e);
         } catch (IOException e) {
-            //e.printStackTrace();
-            System.out.println("IOException: " + e);
+            logger.log.info(e.toString());
+            System.out.println(e);
+            System.exit(1);
         }
         return doc;
     }
@@ -50,10 +56,14 @@ public class Parser {
 
         try {
             doc = parser.build(inputStream);
+            logger.log.info(inputStream.toString());
         } catch (ParsingException e1) {
-            e1.printStackTrace();
+            logger.log.info(e1.toString());
+            System.out.println(e1);
         } catch (IOException e1) {
-            e1.printStackTrace();
+            logger.log.info(e1.toString());
+            System.out.println(e1);
+            System.exit(1);
         }
         return doc;
     }
